@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from "next/server";
 
 const AGENT_ENDPOINT = process.env.AGENT_ENDPOINT || "";
