@@ -1,9 +1,17 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import {
-  Waves, ArrowUp, PowerOff, Check, CheckCircle2,
-} from "lucide-react";
+import { Waves, ArrowUp, PowerOff, Check, CheckCircle2 } from "lucide-react";
+import { marked } from "marked";
 import type { ChatMessage } from "@/lib/data";
+
+function renderMd(text: string): string {
+  marked.setOptions({ breaks: true, gfm: true });
+  const html = marked.parse(text) as string;
+  return html
+    .replace(/<table>/g, '<table style="width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;">')
+    .replace(/<th>/g, '<th style="text-align:left;padding:4px 8px;border-bottom:1px solid #E2E8F0;font-weight:600;color:#0F1F33;">')
+    .replace(/<td>/g, '<td style="padding:4px 8px;border-bottom:1px solid #E2E8F0;color:#64748B;">');
+}
 
 export function ChatPanel({
   messages,
@@ -15,21 +23,23 @@ export function ChatPanel({
   onApprove?: (action: ChatMessage["action"]) => void;
 }) {
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    setLoading(false);
   }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
+    setLoading(true);
     onSend?.(input.trim());
     setInput("");
   };
 
   return (
     <div className="bg-white border border-[#E2E8F0] rounded-card overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-[#E2E8F0]">
         <div className="flex items-center gap-2.5">
           <div className="w-[30px] h-[30px] bg-ink rounded-full flex items-center justify-center shrink-0">
@@ -46,8 +56,7 @@ export function ChatPanel({
         </div>
       </div>
 
-      {/* Messages area — horizontal scrolling chat */}
-      <div className="max-h-[280px] overflow-y-auto px-5 py-4 flex flex-col gap-3" >
+      <div className="max-h-[320px] overflow-y-auto px-5 py-4 flex flex-col gap-3">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -55,7 +64,6 @@ export function ChatPanel({
               msg.role === "bot" ? "self-start max-w-[85%]" : "self-end max-w-[60%]"
             }`}
           >
-            {/* Toast */}
             {msg.toast && (
               <div className="flex items-center gap-2 px-3.5 py-2.5 bg-[#F0FDF4] border border-[#BBF7D0] rounded-sm text-xs font-medium text-[#16A34A] mb-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -63,7 +71,6 @@ export function ChatPanel({
               </div>
             )}
 
-            {/* Bubble */}
             <div
               className={
                 msg.role === "bot"
@@ -71,9 +78,11 @@ export function ChatPanel({
                   : "bg-ink text-white rounded-tl-card rounded-bl-card rounded-br-card rounded-tr-[2px] px-4 py-3"
               }
             >
-              <span dangerouslySetInnerHTML={{ __html: msg.content }} />
+              <div
+                className="prose-sm [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:ml-4 [&>ul]:list-disc [&>ol]:ml-4 [&>ol]:list-decimal [&>h1]:text-sm [&>h2]:text-sm [&>h3]:text-xs [&_strong]:font-semibold [&_table]:my-2 [&_code]:bg-[#E2E8F0] [&_code]:px-1 [&_code]:rounded [&_code]:text-[12px]"
+                dangerouslySetInnerHTML={{ __html: msg.role === "bot" ? renderMd(msg.content) : msg.content }}
+              />
 
-              {/* Action approval — inline card */}
               {msg.action && (
                 <div className="mt-2.5 bg-white border border-baby rounded-sm p-3.5">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-deep mb-1.5">
@@ -81,9 +90,9 @@ export function ChatPanel({
                     {msg.action.title}
                   </div>
                   <div className="grid grid-cols-3 gap-3 text-[11px] text-slate mb-3">
-                    <div><span className="font-semibold text-ink">Target</span><br/>{msg.action.target}</div>
-                    <div><span className="font-semibold text-ink">Saves</span><br/>{msg.action.saves}</div>
-                    <div><span className="font-semibold text-ink">Risk</span><br/>{msg.action.risk}</div>
+                    <div><span className="font-semibold text-ink">Target</span><br />{msg.action.target}</div>
+                    <div><span className="font-semibold text-ink">Saves</span><br />{msg.action.saves}</div>
+                    <div><span className="font-semibold text-ink">Risk</span><br />{msg.action.risk}</div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -110,22 +119,31 @@ export function ChatPanel({
             </div>
           </div>
         ))}
+
+        {loading && (
+          <div className="self-start max-w-[85%] text-[13px]">
+            <div className="bg-off-white border border-[#E2E8F0] rounded-tr-card rounded-br-card rounded-bl-card rounded-tl-[2px] px-4 py-3 text-slate">
+              <span className="animate-pulse">Analyzing your infrastructure...</span>
+            </div>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
-      {/* Input — full width bar */}
       <div className="px-5 py-3 border-t border-[#E2E8F0] flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Ask: &quot;Why is my app slow?&quot; or &quot;How can I cut costs?&quot;"
+          placeholder='Ask: "Why is my app slow?" or "How can I cut costs?"'
           className="flex-1 bg-off-white border border-[#E2E8F0] rounded-sm px-4 py-2.5 text-[13px] text-ink outline-none focus:border-blue transition-colors placeholder:text-lt-slate"
         />
         <button
           onClick={handleSend}
-          className="w-10 h-10 bg-ink rounded-sm flex items-center justify-center shrink-0 hover:bg-deep transition-colors"
+          disabled={loading}
+          className="w-10 h-10 bg-ink rounded-sm flex items-center justify-center shrink-0 hover:bg-deep transition-colors disabled:opacity-50"
         >
           <ArrowUp className="w-4 h-4 text-white" />
         </button>
