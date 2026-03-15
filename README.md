@@ -1,143 +1,238 @@
-# OceanPulse 🐋
+# OceanPulse
 
-**AI-Powered Infrastructure Health Agent for DigitalOcean**
+**AI Infrastructure Health Agent for DigitalOcean**
 
-> Connect your DigitalOcean account → OceanPulse scans your entire infrastructure → generates a health score across cost, performance, security, and architecture → surfaces issues with one-click fixes → you approve → the agent executes via the DO API → health score updates live.
+OceanPulse connects to your DigitalOcean account, scans every resource, generates a health score across cost, performance, security, and architecture — then surfaces issues with one-click fixes. You approve, the agent executes via the DO API, and the health score updates live.
 
-Built for the [DigitalOcean Gradient™ AI Hackathon](https://digitalocean.devpost.com/).
+**Live Demo:** [sea-turtle-app-vshj7.ondigitalocean.app](https://sea-turtle-app-vshj7.ondigitalocean.app)
+
+**Hackathon:** [DigitalOcean Gradient™ AI Hackathon](https://digitalocean.devpost.com/)
 
 ---
 
-## What it does
+## How It Works
 
-OceanPulse is an AI DevOps engineer that lives inside your DigitalOcean account. It:
-
-1. **Scans** every resource: Droplets, databases, volumes, load balancers, firewalls, snapshots, App Platform apps
-2. **Diagnoses** problems across 4 dimensions:
-   - **Cost Efficiency** — oversized Droplets, idle GPUs, unused volumes, forgotten snapshots
-   - **Performance** — CPU/memory bottlenecks, high disk I/O, bandwidth spikes
-   - **Security** — missing firewalls, open ports, no backups, no VPC isolation
-   - **Architecture** — best practice violations, missing monitoring, suboptimal configurations
-3. **Proposes fixes** with exact impact estimates (e.g. "Resize this Droplet → save $32/month")
-4. **Executes approved fixes** via the DigitalOcean API with human-in-the-loop approval
-5. **Stays alive** as a conversational agent you can ask anything about your infrastructure
-
-## How it uses DigitalOcean Gradient™ AI (Full Stack)
-
-### Gradient AI Platform
-- **6 agents** in one workspace: Parent (OceanPulse whale persona), Scanner, Cost Analyzer, Performance Analyzer, Security Auditor, Fixer
-- **Multi-agent routing**: Parent routes queries to specialized child agents based on intent
-- **Knowledge bases**: DO documentation crawled via website crawler + best practices guides + pricing tables uploaded to Spaces
-- **Function calling**: 20+ DO API functions wired as function routes (list_droplets, get_cpu_metrics, resize_droplet, create_firewall, etc.)
-- **Guardrails**: No destructive action without explicit user approval, sensitive data detection for API tokens, block hallucinated resource IDs
-- **Agent evaluations**: 30+ test cases covering oversized Droplet detection, missing firewall catch, idle GPU detection, resize approval flow, persona tone
-- **Agent versioning**: Multiple iterations tracked with performance comparison
-- **Traceability**: Full trace of every scan → analysis → recommendation → action chain
-- **Agent Playground**: Test the agent directly in DO control panel
-- **Embeddable chatbot widget**: Drop-in `<script>` tag for any website
-
-### Serverless Inference
-- **Anthropic Claude** (reasoning mode) for complex root cause analysis and architecture recommendations
-- **Meta Llama 3.3 70B** for fast initial triage and classification
-- Multiple model comparison via evaluations to find optimal model per task
-
-### GPU Droplet
-- **1-Click Llama** deployment for anomaly pattern detection on metric time-series data
-- Self-hosted model for heavy code generation tasks (Terraform, infrastructure-as-code)
-
-### Agent Development Kit (ADK)
-- Full LangGraph state machine: SCAN → ANALYZE → REPORT → CONVERSATION ⇄ FIX
-- Custom trace decorators on every node (`@trace_tool`, `@trace_llm`, `@trace_retriever`)
-- Deployed via `gradient agent deploy` to production `/run` endpoint
-- Local development with `gradient agent run`
-
-### DigitalOcean Ecosystem
-- **App Platform**: Next.js frontend dashboard with health score visualization, resource inventory, chat interface, action approval buttons
-- **Managed PostgreSQL**: Scan history, action audit log, session persistence
-- **Spaces**: Knowledge base file storage, scan report archives
-- **DO API**: Both read (inventory, metrics, billing) and write (resize, firewall, backups, power off) operations
-- **Monitoring API**: CPU, memory, disk I/O, bandwidth, load average metrics
-
-## Agent Persona
-
-OceanPulse speaks as a friendly, knowledgeable whale who genuinely cares about your infrastructure's health. It uses occasional ocean metaphors, celebrates improvements, and delivers bad news kindly but directly. Every destructive action requires explicit approval — the whale never goes rogue.
-
-## Setup
-
-### Prerequisites
-- DigitalOcean account with $200 free credits (via [MLH signup](https://mlh.link/digitalocean-signup))
-- Python 3.10+
-- Gradient ADK Feature Preview enabled
-
-### Quick Start
-
-```bash
-# Clone
-git clone https://github.com/penguinpecker/oceanpulse.git
-cd oceanpulse
-
-# Install
-pip install -r requirements.txt
-
-# Configure
-cp .env.example .env
-# Add your GRADIENT_MODEL_ACCESS_KEY and DIGITALOCEAN_API_TOKEN
-
-# Run locally
-gradient agent run
-
-# Deploy to production
-gradient agent deploy
 ```
-
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
+┌─────────────────────────────────────────────────────────────────┐
+│                        USER FLOW                                │
+│                                                                 │
+│  Paste DO Token ──► Scan Animation ──► Health Dashboard         │
+│                                           │                     │
+│                    ┌──────────────────────┤                     │
+│                    │                      │                     │
+│                    ▼                      ▼                     │
+│              AI Chat Advisor        Issues List                 │
+│              "How can I cut         [Fix] [Enable] [Delete]     │
+│               costs?"                     │                     │
+│                    │                      │                     │
+│                    ▼                      ▼                     │
+│              Proposes Fix ◄──────── User Clicks Fix             │
+│                    │                                            │
+│                    ▼                                            │
+│              [Approve] [Cancel]                                 │
+│                    │                                            │
+│                    ▼                                            │
+│              Executes via DO API                                │
+│                    │                                            │
+│                    ▼                                            │
+│              Score Updates Live                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Architecture
 
 ```
-User → Next.js Dashboard (App Platform)
-         ↓
-    OceanPulse Parent Agent (Gradient AI)
-         ↓ multi-agent routing
-    ┌────┼────┬────┬────┐
-    ↓    ↓    ↓    ↓    ↓
- Scanner Cost  Perf  Sec  Fixer
-    ↓    ↓    ↓    ↓    ↓
- DO API Functions (read + write)
-    ↓
- DigitalOcean Infrastructure
+┌──────────────────────────────────────────────────────────────────────┐
+│                     DO App Platform (Next.js 15)                     │
+│                                                                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌──────────────┐                │
+│  │  /api/scan   │  │  /api/chat   │  │  /api/fix    │                │
+│  │             │  │              │  │              │                │
+│  │ Inventories │  │ AI Advisor   │  │ Executes     │                │
+│  │ all DO      │  │ w/ live      │  │ approved     │                │
+│  │ resources   │  │ infra data   │  │ actions      │                │
+│  └──────┬──────┘  └──────┬───────┘  └──────┬───────┘                │
+│         │                │                  │                        │
+│         ▼                ▼                  ▼                        │
+│  ┌─────────────────────────────────────────────────────────┐        │
+│  │              DigitalOcean API (v2)                       │        │
+│  │                                                         │        │
+│  │  READ                          WRITE                    │        │
+│  │  • GET /droplets               • POST /firewalls        │        │
+│  │  • GET /databases              • POST /droplets/actions │        │
+│  │  • GET /volumes                  (resize, backup, power)│        │
+│  │  • GET /firewalls              • DELETE /volumes         │        │
+│  │  • GET /snapshots              • POST /monitoring/alerts│        │
+│  │  • GET /customers/balance                               │        │
+│  └─────────────────────────────────────────────────────────┘        │
+│                                                                      │
+│         ┌──────────────────────────────────┐                         │
+│         │   DO Serverless Inference        │                         │
+│         │   Model: openai-gpt-oss-20b      │                         │
+│         │   Context: live infra + issues   │                         │
+│         └──────────────────────────────────┘                         │
+│                                                                      │
+│         ┌──────────────────────────────────┐                         │
+│         │   DO Gradient Agent Platform     │                         │
+│         │   Agent: OceanPulse              │                         │
+│         │   Workspace: OceanPulse          │                         │
+│         └──────────────────────────────────┘                         │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-## Demo
+## DigitalOcean Gradient Features Used
 
-[3-minute demo video](https://youtube.com/watch?v=TODO)
-
-1. Connect a DO account with intentionally misconfigured resources
-2. OceanPulse scans and generates health score: 47/100
-3. Surfaces 5 issues: oversized Droplet, no firewall, idle GPU, no backups, unused volume
-4. User approves fixes one by one
-5. Agent executes: resizes Droplet, creates firewall, powers off GPU, enables backups, deletes volume
-6. Health score updates live: 47 → 92/100
-7. Show Gradient dashboard: agent traces, evaluation results, knowledge base citations
-
-## Judging Criteria Alignment
-
-| Criteria | How OceanPulse delivers |
+| Feature | How It's Used |
 |---|---|
-| **Technological Implementation** | 6 agents, multi-routing, RAG, function calling (20+ functions), guardrails, evaluations, ADK deployment, LangGraph state machine, GPU Droplet, full traceability |
-| **Design** | Clean Next.js dashboard, health score visualization, chat interface with whale persona, one-click approval buttons, real-time score updates |
-| **Potential Impact** | Every one of DO's 600K+ customers can use this. Especially impactful for startups and small teams who can't afford a DevOps engineer |
-| **Quality of Idea** | Not just monitoring — it's an AI that diagnoses AND fixes. Human-in-the-loop ensures safety. The whale persona makes complex infrastructure decisions accessible |
+| **Gradient Agent Platform** | OceanPulse agent with custom instructions, workspace, and endpoint |
+| **Serverless Inference** | AI chat advisor calls `openai-gpt-oss-20b` via DO inference API with live infrastructure context injected into the system prompt |
+| **Model Access Keys** | Authenticates serverless inference requests |
+| **App Platform** | Hosts the Next.js 15 frontend with auto-deploy on git push |
+| **DO API v2 (read)** | Scans Droplets, databases, volumes, firewalls, snapshots, and billing |
+| **DO API v2 (write)** | Creates firewalls, enables backups, resizes Droplets, deletes volumes, creates monitoring alerts |
+
+## Health Scoring
+
+OceanPulse generates scores across four dimensions:
+
+- **Security (0–100)** — Deducts 25 points per Droplet without a firewall, 10 per Droplet without backups. A score of 0 means every server is exposed.
+- **Cost (0–100)** — Flags unused volumes, unattached storage, and waste. Lower score = more money being burned.
+- **Performance (0–100)** — Analyzes CPU, memory, and disk utilization patterns to identify bottlenecks and oversized instances.
+- **Architecture (0–100)** — Checks VPC isolation, monitoring, and best practice adherence.
+- **Overall** = average of all four.
+
+## Actions the Agent Can Execute
+
+All write operations require explicit user approval before execution.
+
+| Action | What It Does | DO API Call |
+|---|---|---|
+| **Create Firewall** | Adds firewall allowing HTTP/HTTPS/SSH only | `POST /v2/firewalls` |
+| **Enable Backups** | Turns on automated weekly backups | `POST /v2/droplets/{id}/actions` |
+| **Resize Droplet** | Power off → resize to smaller instance → power on | `POST /v2/droplets/{id}/actions` |
+| **Delete Volume** | Removes unattached block storage | `DELETE /v2/volumes/{id}` |
+| **Power Off** | Graceful shutdown of idle Droplets | `POST /v2/droplets/{id}/actions` |
+| **Create Alert** | Sets up CPU/memory monitoring alerts | `POST /v2/monitoring/alerts` |
+
+## Tech Stack
+
+- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS v4
+- **AI:** DigitalOcean Serverless Inference (`openai-gpt-oss-20b`), Gradient Agent Platform
+- **Infrastructure API:** DigitalOcean API v2 (read + write)
+- **Hosting:** DigitalOcean App Platform
+- **Typography:** Instrument Sans (body) + IBM Plex Mono (data)
+- **Markdown rendering:** `marked` library for chat messages
+
+## Project Structure
+
+```
+oceanpulse/
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.tsx                 # Main 3-screen state machine
+│   │   │   ├── layout.tsx               # Root layout + fonts
+│   │   │   ├── globals.css              # Tailwind v4 theme config
+│   │   │   └── api/
+│   │   │       ├── scan/route.ts        # DO API scan — inventories all resources, calculates scores
+│   │   │       ├── chat/route.ts        # AI advisor — agent → serverless inference fallback
+│   │   │       └── fix/route.ts         # Executes approved write actions via DO API
+│   │   ├── components/
+│   │   │   ├── Topbar.tsx               # Nav bar with connection status
+│   │   │   ├── ScoreStrip.tsx           # 5-cell health score display
+│   │   │   ├── ChatPanel.tsx            # AI chat with markdown rendering + approval cards
+│   │   │   ├── IssuesList.tsx           # Filterable issues with severity + action buttons
+│   │   │   ├── ResourceTable.tsx        # Tabbed resource inventory (Droplets, DBs, Volumes, LBs)
+│   │   │   ├── ActionHistory.tsx        # Timeline of executed actions
+│   │   │   └── Screens.tsx              # Onboard + scanning animation screens
+│   │   └── lib/
+│   │       └── data.ts                  # TypeScript interfaces
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── next.config.ts
+├── main.py                              # LangGraph state machine (ADK entrypoint)
+├── do_api.py                            # Python DO API wrapper (20+ endpoints)
+├── requirements.txt
+├── evaluations/
+│   └── test-cases.json                  # 30 agent evaluation test cases
+├── scripts/
+│   ├── setup-agents.sh                  # Creates agents + KB + routes via DO API
+│   ├── create-demo-infra.sh             # Creates intentionally misconfigured test resources
+│   └── cleanup-demo.sh                  # Destroys demo resources after recording
+├── DEMO-SCRIPT.md                       # 3-minute demo video script with timestamps
+├── DEVPOST-SUBMISSION.md                # Copy-paste Devpost submission text
+├── LICENSE                              # MIT
+└── README.md
+```
+
+## Running Locally
+
+```bash
+git clone https://github.com/penguinpecker/oceanpulse.git
+cd oceanpulse/frontend
+npm install
+```
+
+Create `.env.local`:
+
+```
+DIGITALOCEAN_API_TOKEN=dop_v1_your_token
+GRADIENT_MODEL_ACCESS_KEY=sk-do-your_key
+AGENT_ENDPOINT=https://your-agent.agents.do-ai.run
+```
+
+```bash
+npm run dev
+# → http://localhost:3000
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DIGITALOCEAN_API_TOKEN` | Yes | DO API token with read+write scope |
+| `GRADIENT_MODEL_ACCESS_KEY` | Yes | Model access key from DO Serverless Inference |
+| `AGENT_ENDPOINT` | Optional | Gradient agent endpoint URL |
+| `AGENT_ACCESS_KEY` | Optional | Agent endpoint access key (if private) |
+
+## Demo Infrastructure
+
+The repo includes scripts to create intentionally misconfigured resources for demo purposes:
+
+```bash
+export DIGITALOCEAN_API_TOKEN=your_token
+
+# Create 3 Droplets + 1 unattached volume with security gaps
+bash scripts/create-demo-infra.sh
+
+# After recording, destroy everything
+bash scripts/cleanup-demo.sh
+```
+
+Creates:
+
+| Resource | Config | Issue |
+|---|---|---|
+| `web-prod-1` | s-2vcpu-4gb, nyc1 | No firewall, no backups |
+| `api-server` | s-4vcpu-8gb, nyc1 | No firewall, no backups |
+| `staging-01` | s-1vcpu-2gb, nyc1 | No firewall, no backups |
+| `old-data-vol` | 50GB block storage | Unattached (waste) |
+
+Total: ~$89/mo (covered by $200 DO free credits).
+
+## What Makes OceanPulse Different
+
+Most infrastructure monitoring tools are read-only dashboards. OceanPulse is different:
+
+1. **Reads AND writes** — doesn't just show problems, fixes them with user approval
+2. **AI with live context** — the chat advisor sees your actual resource names, costs, and issues — not generic advice
+3. **100% DigitalOcean stack** — Agent Platform + Serverless Inference + App Platform + DO API. No external dependencies.
+4. **Human-in-the-loop** — every write operation requires explicit approval. No surprise changes.
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
-## Team
+## Author
 
 Built by [@penguinpecker](https://github.com/penguinpecker) for the DigitalOcean Gradient™ AI Hackathon 2026.
