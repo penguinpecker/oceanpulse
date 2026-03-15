@@ -1,0 +1,14 @@
+.env
+.env.local
+.env*.local
+__pycache__/
+*.pyc
+node_modules/
+.next/
+.gradient/
+.vercel
+.DS_Store
+*.tar.gz
+preview*.html
+package-lock.json
+next-env.d.ts

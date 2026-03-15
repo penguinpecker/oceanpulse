@@ -1,0 +1,36 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #0F1F33;
+  --color-deep: #1B3A5C;
+  --color-mid: #3D7EBF;
+  --color-blue: #5BA0D9;
+  --color-baby: #B8D4F0;
+  --color-ice: #EBF2FF;
+  --color-off-white: #F7F9FC;
+  --color-slate: #64748B;
+  --color-lt-slate: #94A3B8;
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --radius-card: 10px;
+  --radius-sm: 6px;
+}
+
+body {
+  background: var(--color-off-white);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 0.8s linear infinite;
+}
