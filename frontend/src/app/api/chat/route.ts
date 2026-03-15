@@ -52,9 +52,9 @@ export async function POST(req: NextRequest) {
           const volumes = (await volRes.json()).volumes || [];
 
           const fwDropletIds = new Set();
-          firewalls.forEach((fw) => (fw.droplet_ids || []).forEach((id) => fwDropletIds.add(id)));
+          firewalls.forEach((fw: any) => (fw.droplet_ids || []).forEach((id: any) => fwDropletIds.add(id)));
 
-          const infra = droplets.map((d) => ({
+          const infra = droplets.map((d: any) => ({
             name: d.name,
             size: d.size_slug,
             vcpus: d.vcpus,
@@ -66,15 +66,15 @@ export async function POST(req: NextRequest) {
             has_backups: (d.features || []).includes("backups"),
           }));
 
-          const vols = volumes.map((v) => ({
+          const vols = volumes.map((v: any) => ({
             name: v.name,
             size_gb: v.size_gigabytes,
             attached: (v.droplet_ids || []).length > 0,
           }));
 
-          const totalCost = droplets.reduce((s, d) => s + parseFloat(d.size?.price_monthly || 0), 0);
+          const totalCost = droplets.reduce((s: number, d: any) => s + parseFloat(d.size?.price_monthly || 0), 0);
 
-          context = "LIVE INFRASTRUCTURE DATA:\nTotal monthly cost: $" + totalCost + "\nDroplets (" + droplets.length + "): " + JSON.stringify(infra) + "\nFirewalls: " + firewalls.length + " configured\nVolumes (" + volumes.length + "): " + JSON.stringify(vols) + "\n\nISSUES:\n" + infra.filter((d) => !d.has_firewall).map((d) => "- CRITICAL: " + d.name + " has NO firewall").join("\n") + "\n" + infra.filter((d) => !d.has_backups).map((d) => "- WARNING: " + d.name + " has NO backups").join("\n") + "\n" + vols.filter((v) => !v.attached).map((v) => "- WASTE: Volume " + v.name + " (" + v.size_gb + "GB) is unattached").join("\n");
+          context = "LIVE INFRASTRUCTURE DATA:\nTotal monthly cost: $" + totalCost + "\nDroplets (" + droplets.length + "): " + JSON.stringify(infra) + "\nFirewalls: " + firewalls.length + " configured\nVolumes (" + volumes.length + "): " + JSON.stringify(vols) + "\n\nISSUES:\n" + infra.filter((d: any) => !d.has_firewall).map((d) => "- CRITICAL: " + d.name + " has NO firewall").join("\n") + "\n" + infra.filter((d: any) => !d.has_backups).map((d) => "- WARNING: " + d.name + " has NO backups").join("\n") + "\n" + vols.filter((v: any) => !v.attached).map((v) => "- WASTE: Volume " + v.name + " (" + v.size_gb + "GB) is unattached").join("\n");
         } catch {}
       }
 
