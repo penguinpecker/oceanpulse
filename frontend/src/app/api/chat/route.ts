@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
           Authorization: "Bearer " + GRADIENT_KEY,
         },
         body: JSON.stringify({
-          model: "openai-gpt-4o-mini",
+          model: "openai-gpt-oss-20b",
           messages: [
             {
               role: "system",
