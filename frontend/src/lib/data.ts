@@ -21,6 +21,7 @@ export interface Issue {
   action: string;
   actionLabel: string;
   category: "cost" | "security" | "performance" | "architecture";
+  resource_id?: string | number;
 }
 
 export interface Resource {

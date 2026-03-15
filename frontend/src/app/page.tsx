@@ -182,34 +182,39 @@ export default function Home() {
   // ── Approve action ──
   const handleApprove = useCallback(
     async (action: ChatMessage["action"]) => {
-      // Find the matching issue to get action type and resource_id
       const matchingIssue = issues.find((i) =>
         action?.title?.includes(i.title)
       );
 
+      let fixResult = null;
       if (matchingIssue && token) {
         try {
-          await fetch("/api/fix", {
+          const res = await fetch("/api/fix", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               do_token: token,
               action: matchingIssue.action,
-              resource_id: (matchingIssue as any).resource_id || matchingIssue.tags[0],
+              resource_id: matchingIssue.resource_id || matchingIssue.tags[0],
             }),
           });
-        } catch {
-          // Continue with UI update even if API fails
+          fixResult = await res.json();
+        } catch (err) {
+          console.error("Fix failed:", err);
         }
       }
 
-      // Success toast
+      const success = fixResult?.success !== false;
       const toast: ChatMessage = {
         id: `ok-${Date.now()}`,
         role: "bot",
-        content: "What else would you like me to look at?",
+        content: success
+          ? "Done! What else would you like me to look at?"
+          : `Hit a snag: ${fixResult?.error || "unknown error"}. Want me to try a different approach?`,
         time: "Just now",
-        toast: `${action?.title} completed successfully.`,
+        toast: success
+          ? `${action?.title} completed successfully.`
+          : undefined,
       };
       setMessages((prev) => [...prev, toast]);
 

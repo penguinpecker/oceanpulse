@@ -12,3 +12,4 @@ node_modules/
 preview*.html
 package-lock.json
 next-env.d.ts
+app-spec.yaml
